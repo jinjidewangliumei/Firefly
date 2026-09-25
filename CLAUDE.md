@@ -50,7 +50,7 @@ Scroll-linked work in `src/utils/` is rAF-throttled and must stay cheap on mobil
 
 - `fullscreen-wallpaper-utils.ts` — fullscreen-mode title fade + blur ramp. The blur value `--fullscreen-blur` is **quantized to 2px steps** (skips writes when unchanged) and the max blur (`--overlay-blur`) is **cached** (read once; refreshed by a MutationObserver on `#wallpaper-wrapper` style). Avoid per-frame `getComputedStyle` or continuous full-screen `filter: blur()` writes — each change re-rasterizes the whole viewport on mobile.
 - `grid-layout-utils.ts` — `updateSidebarStickySpacing()` is the per-scroll path and **must not read layout** (`offsetHeight` etc.). The sidebar top-container visibility (`hasVisibleTop`) is cached by `refreshSidebarStickyState()`, which runs on init/navigation only.
-- Fullscreen blur ramp can be disabled per device via `backgroundWallpaper.fullscreen.blurRamp.enable.{desktop,mobile}` — when off, fullscreen mode has no blur on that device (home + other pages) and the settings-panel blur slider is hidden. Documented in `Firefly-Docs/` (zh/en).
+- Fullscreen blur ramp can be disabled per device via `backgroundWallpaper.fullscreen.blurRamp.enable.{desktop,mobile}` — when off, fullscreen mode has no blur on that device (home + other pages) and the settings-panel blur slider is hidden. Documented in the gitignored `Firefly-docs/` docs workspace (not part of this checkout).
 
 ### Content Collections
 
@@ -58,6 +58,7 @@ Defined in `src/content.config.ts`:
 - `posts` — blog posts (`.md`/`.mdx`) with frontmatter: title, published, tags, category, draft, pinned, password, comment, etc.
 - `spec` — special pages (about, guestbook)
 - `dynamic` — microblog entries (`.md`) with frontmatter: published, pinned, location
+- `projects` — project showcase entries (`.md`/`.mdx`) with frontmatter: title, published, tags, link, status
 
 ### Key Directories
 
@@ -76,13 +77,13 @@ Defined in `src/content.config.ts`:
 
 - **Biome** enforces: tab indentation, double quotes, recommended lint rules
 - Relaxed rules for `.svelte`/`.astro`/`.vue` files (`useConst`, `useImportType`, `noUnusedVariables`, `noUnusedImports` off)
-- `pnpm lint`/`pnpm format` only target `./src` — `scripts/` is type-checked (tsconfig `include`) but not linted, and currently has pre-existing Biome findings
+- `pnpm lint`/`pnpm format` target `./src ./scripts` and auto-write fixes; CI Biome (`.github/workflows/biome.yml`) checks `./src` only
 - `scripts/subset-font.d.ts` is a hand-written ambient declaration for the untyped `subset-font` package
 - Commit convention: **Conventional Commits** (`feat:`, `fix:`, `chore:`, etc.)
 
 ## Build Pipeline
 
-Multi-step: `scripts/generate-lqips.ts` → `scripts/generate-vndb-covers.ts` → `astro build` → `scripts/prune-pio-assets.ts` → `scripts/subset-fonts.ts` → `scripts/minify-inline-scripts.ts` → `pagefind --site dist`
+Multi-step: `scripts/generate-lqips.ts` → `scripts/generate-vndb-covers.ts` → `astro build` → `scripts/prune-pio-assets.ts` → `scripts/subset-fonts.ts` → `scripts/minify-inline-scripts.ts` → `scripts/run-pagefind.ts`
 
 LQIP data is generated into `src/constants/lqips.json` and committed — regenerate with `pnpm lqips`. Icon data lives in `src/constants/icons-data.json` (committed, Biome-ignored, consumed by `src/components/common/Icon.svelte`) but has no generator script in the current build.
 
@@ -92,7 +93,7 @@ LQIP data is generated into `src/constants/lqips.json` and committed — regener
 
 ## Deployment
 
-- **Vercel** (default, `vercel.json`)
-- **Cloudflare Workers** (`wrangler.jsonc`, set `CF_WORKERS` env var)
+- **Cloudflare Pages** (this fork's actual hosting): the dashboard builds this git repo (`pnpm build` → `dist`)
+- Upstream alternatives still in the repo: Vercel (`vercel.json`), Cloudflare Workers (`wrangler.jsonc` + `CF_WORKERS`), GitHub Pages (`.github/workflows/deploy.yml`)
 - Static output to `dist/`
 
